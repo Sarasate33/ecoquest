@@ -69,7 +69,7 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Active: ${widget.tour.title}'),
-        backgroundColor: const Color(0xFFFFFF),
+        backgroundColor: const Color(0xFFFFFFFF),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
