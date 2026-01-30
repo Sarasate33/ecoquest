@@ -7,39 +7,41 @@ import 'package:permission_handler/permission_handler.dart';
 import '../models/checkpoint.dart';
 
 class BeaconService {
+  //singleton pattern - only one instanc eof BeaconService exists app-wide: all share same scanner state
   static final BeaconService _instance = BeaconService._internal();
   factory BeaconService() => _instance;
   BeaconService._internal();
 
-  final _detectedCheckpointsController =
-      StreamController<List<Checkpoint>>.broadcast();
+  // broadcast stream for checkpoint trigger events
   final _checkpointTriggeredController =
       StreamController<Checkpoint>.broadcast();
 
-  Stream<List<Checkpoint>> get detectedCheckpoints =>
-      _detectedCheckpointsController.stream;
+  // get stream of triggered checkpoints
   Stream<Checkpoint> get checkpointTriggered =>
       _checkpointTriggeredController.stream;
 
+  // database of known checkpoints with their beacon identifiers
   final Map<int, Checkpoint> _beaconRegistry = {
     19641: const Checkpoint(
       id: 0,
       name: 'Memorial Stone',
       description: 'Learn about the 300-year-old oak and its ecosystem',
       beaconUuid: 'fda50693-a4e2-4fb1-afcf-c6eb07647825',
-      beaconMajor: 10011,
-      beaconMinor: 19641,
-      experienceType: ExperienceType.information,
+      beaconMajor: 10011, // must match ble beacons major
+      beaconMinor: 19641, // minor used as unique checkpoint id
     ),
   };
 
-  StreamSubscription<List<ScanResult>>? _scanSubscription;
+  StreamSubscription<List<ScanResult>>?
+  _scanSubscription; // active scan subscription, nullable if scan not active
   final Map<int, Checkpoint> _currentlyDetected = {};
-  final Map<int, DateTime> _lastTriggered = {};
+  final Map<int, DateTime> _lastTriggered = {}; // for debouncing (cooldown)
+  final Set<int> _discoveredCheckpointIds =
+      {}; // tracks checkpoints already triggered in this session
   final Duration _debounceTime = const Duration(seconds: 10);
   bool _isScanning = false;
 
-  // Target iBeacon identifiers (matches your screenshot)
+  // Target ble identifiers
   final String _targetUuid = 'fda50693-a4e2-4fb1-afcf-c6eb07647825';
   final int _targetMajor = 10011;
 
@@ -76,7 +78,7 @@ class BeaconService {
         await FlutterBluePlus.stopScan();
       } catch (_) {}
 
-      // Start persistent scan. Avoid named params that may be unsupported by plugin version.
+      // Start persistent scan
       FlutterBluePlus.startScan(androidUsesFineLocation: true);
 
       // Subscribe once to aggregated scanResults stream
@@ -169,9 +171,6 @@ class BeaconService {
     _currentlyDetected.removeWhere(
       (id, _) => !currentlyDetectedIds.contains(id),
     );
-
-    // Emit current detected list
-    _detectedCheckpointsController.add(_currentlyDetected.values.toList());
   }
 
   Map<String, dynamic>? _parseIBeacon(ScanResult result) {
@@ -235,6 +234,11 @@ class BeaconService {
   }
 
   void _triggerCheckpoint(Checkpoint checkpoint) {
+    // Skip if already discovered in this session
+    if (_discoveredCheckpointIds.contains(checkpoint.id)) {
+      return;
+    }
+
     final last = _lastTriggered[checkpoint.id];
     if (last != null) {
       final elapsed = DateTime.now().difference(last);
@@ -247,11 +251,11 @@ class BeaconService {
       }
     }
     _lastTriggered[checkpoint.id] = DateTime.now();
+    _discoveredCheckpointIds.add(checkpoint.id);
     _checkpointTriggeredController.add(checkpoint);
   }
 
   Future<void> stopScanning() async {
-    if (_debug) print('[BeaconService] stopScanning');
     _isScanning = false;
     await _scanSubscription?.cancel();
     _scanSubscription = null;
@@ -261,9 +265,13 @@ class BeaconService {
     _currentlyDetected.clear();
   }
 
+  /// Reset discovered checkpoints for a new tour session
+  void resetDiscoveredCheckpoints() {
+    _discoveredCheckpointIds.clear();
+  }
+
   void dispose() {
     stopScanning();
-    _detectedCheckpointsController.close();
     _checkpointTriggeredController.close();
   }
 

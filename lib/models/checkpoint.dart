@@ -1,7 +1,5 @@
 // lib/models/checkpoint.dart
 
-enum ExperienceType { information, quiz, game }
-
 class Checkpoint {
   final int id;
   final String name;
@@ -9,7 +7,7 @@ class Checkpoint {
   final String beaconUuid;
   final int beaconMajor;
   final int beaconMinor;
-  final ExperienceType experienceType;
+
 
   const Checkpoint({
     required this.id,
@@ -18,6 +16,5 @@ class Checkpoint {
     required this.beaconUuid,
     required this.beaconMajor,
     required this.beaconMinor,
-    required this.experienceType,
   });
 }

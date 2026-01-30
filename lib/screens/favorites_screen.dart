@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
   
+  // build favorites screen - placeholder for now
   @override
   Widget build(BuildContext context) {
     return Scaffold(

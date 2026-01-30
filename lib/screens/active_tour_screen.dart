@@ -1,7 +1,7 @@
 // lib/screens/active_tour_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_application_demo/data/questions.dart';
+import 'package:flutter_application_demo/services/questions.dart';
 import 'dart:async';
 import '../config/theme.dart';
 import '../services/beacon_service.dart';
@@ -16,39 +16,31 @@ class ActiveTourScreen extends StatefulWidget {
 
 class _ActiveTourScreenState extends State<ActiveTourScreen> {
   final BeaconService _beaconService = BeaconService();
-  StreamSubscription? _detectedSub;
   StreamSubscription? _triggeredSub;
 
   int discoveredCheckpoints = 9;
   int totalCheckpoints = 16;
   int currentPoints = 450;
-  List<String> detectedBeaconNames = [];
   List<String> selectedAnswers = [];
   String statusMessage = "Searching for checkpoints...";
+  String feedback = "";
 
   @override
   void initState() {
     super.initState();
+    _beaconService.resetDiscoveredCheckpoints();
     _startScanning();
   }
 
   Future<void> _startScanning() async {
     await _beaconService.startScanning();
 
-    _detectedSub = _beaconService.detectedCheckpoints.listen((checkpoints) {
-      setState(() {
-        detectedBeaconNames = checkpoints.map((cp) => cp.name).toList();
-        statusMessage = "${checkpoints.length} beacon(s) in range";
-      });
-    });
-
     _triggeredSub = _beaconService.checkpointTriggered.listen((checkpoint) {
       if (!mounted) return;
       setState(() {
         discoveredCheckpoints++;
-        statusMessage = "Checkpoint reached: ${checkpoint.name}";
       });
-      _showCheckpointDialog(
+      _showCheckpointQuiz(
         checkpoint.name,
         checkpoint.description,
         checkpoint.id,
@@ -62,15 +54,15 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
       selectedAnswers.add(selectedAnswer);
       if (selectedAnswer == checkpointQuestion.answers[0]) {
         currentPoints += 150; // award points for correct answer
-        statusMessage = "Correct answer! +150 Points";
+        feedback = "Correct answer! +150 Points";
       } else {
-        statusMessage = "Wrong answer. Try again next time!";
+        feedback = "Wrong answer. Try again next time!";
       }
     });
   }
 
   // Show dialog for discovered checkpoint - Quiz Questions
-  void _showCheckpointDialog(String name, String description, int id) {
+  void _showCheckpointQuiz(String name, String description, int id) {
     final checkpointQuestion = questions[id];
     showDialog(
       context: context,
@@ -104,13 +96,9 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
                               // Update parent state (awards points if correct)
                               answerQuestion(answer, checkpointQuestion);
                               // Close dialog after short delay so user sees feedback
-                              Future.delayed(
-                                const Duration(milliseconds: 800),
-                                () {
-                                  if (Navigator.of(ctx).canPop())
-                                    Navigator.of(ctx).pop();
-                                },
-                              );
+
+                              if (Navigator.of(ctx).canPop())
+                                Navigator.of(ctx).pop();
                             },
                       child: Text(answer),
                     ),
@@ -126,7 +114,6 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
 
   @override
   void dispose() {
-    _detectedSub?.cancel();
     _triggeredSub?.cancel();
     _beaconService.stopScanning();
     super.dispose();
@@ -143,6 +130,13 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
       ),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Text(
+              statusMessage,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -172,47 +166,11 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
               ],
             ),
           ),
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text(
-              statusMessage,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            child: Text(feedback, style: Theme.of(context).textTheme.bodySmall),
           ),
-
-          const SizedBox(height: 16),
-
-          if (detectedBeaconNames.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Card(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Text(
-                        "Beacons in Range:",
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                    ),
-                    ...detectedBeaconNames.map(
-                      (name) => ListTile(
-                        leading: const Icon(
-                          Icons.bluetooth,
-                          color: ecoPrimaryGreen,
-                        ),
-                        title: Text(
-                          name,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        dense: true,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
 
           Expanded(
             child: Container(

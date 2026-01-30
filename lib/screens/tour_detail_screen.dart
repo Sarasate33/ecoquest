@@ -8,6 +8,8 @@ class TourDetailScreen extends StatelessWidget {
   final Map<String, dynamic> tour;
   const TourDetailScreen({super.key, required this.tour});
 
+
+// displayed data provided by data_service.dart
   @override
   Widget build(BuildContext context) {
     return Scaffold(

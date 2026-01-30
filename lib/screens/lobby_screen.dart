@@ -32,40 +32,97 @@ class LobbyScreen extends StatelessWidget {
               ),
               child: Text(
                 lobbyCode,
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(letterSpacing: 4),
+                style: Theme.of(
+                  context,
+                ).textTheme.headlineLarge?.copyWith(letterSpacing: 4),
               ),
             ),
             const SizedBox(height: 40),
             Align(
               alignment: Alignment.centerLeft,
-              child: Text("Participants:", style: Theme.of(context).textTheme.titleMedium),
+              child: Text(
+                "Participants:",
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
             ),
             const SizedBox(height: 10),
             ListTile(
-              leading: const CircleAvatar(backgroundColor: ecoPrimaryGreen, child: Icon(Icons.person, color: Colors.white)),
-              title: Text("${DataService.currentUserName} (You)", style: Theme.of(context).textTheme.bodyLarge),
+              leading: const CircleAvatar(
+                backgroundColor: ecoPrimaryGreen,
+                child: Icon(Icons.person, color: Colors.white),
+              ),
+              title: Text(
+                "${DataService.currentUserName} (You)",
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
               trailing: const Icon(Icons.check_circle, color: ecoPrimaryGreen),
             ),
-            if (isHost) ...[
-              ListTile(
-                leading: const CircleAvatar(backgroundColor: Colors.blue, child: Icon(Icons.person, color: Colors.white)),
-                title: Text("Dilara (Waiting...)", style: Theme.of(context).textTheme.bodyLarge),
-                trailing: const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Colors.blue,
+                child: Icon(Icons.person, color: Colors.white),
               ),
-            ],
+              title: Text(
+                "Dilara (Waiting...)",
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              trailing: const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Colors.blue,
+                child: Icon(Icons.person, color: Colors.white),
+              ),
+              title: Text(
+                "Johanna (Ready!)",
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              trailing: const Icon(Icons.check_circle, color: ecoPrimaryGreen),
+            ),
+            ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Colors.blue,
+                child: Icon(Icons.person, color: Colors.white),
+              ),
+              title: Text(
+                "Milo (Waiting...)",
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              trailing: const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+
             const Spacer(),
             if (isHost)
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const ActiveTourScreen()));
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ActiveTourScreen(),
+                      ),
+                    );
                   },
                   child: const Text("Start Game for Everyone"),
                 ),
               )
             else
-              Text("Waiting for host to start...", style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic)),
+              Text(
+                "Waiting for host to start...",
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontStyle: FontStyle.italic),
+              ),
           ],
         ),
       ),

@@ -2,6 +2,7 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+<!-- Required permissions for Bluetooth and Location access added with the help of Claude AI -->
     <key>NSBluetoothAlwaysUsageDescription</key>
     <string>EcoQuest needs Bluetooth to detect checkpoints on your nature trails</string>
     <key>NSBluetoothPeripheralUsageDescription</key>

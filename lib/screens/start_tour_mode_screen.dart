@@ -22,6 +22,7 @@ class _StartTourModeScreenState extends State<StartTourModeScreen> {
   }
 
   void _joinLobby() {
+    // simple validation for 6-digit code
     if (_lobbyCodeController.text.length == 6) {
       Navigator.push(context, MaterialPageRoute(builder: (context) => LobbyScreen(lobbyCode: _lobbyCodeController.text, isHost: false)));
     } else {

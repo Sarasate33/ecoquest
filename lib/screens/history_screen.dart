@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../config/theme.dart';
 import '../services/data_service.dart';
 
+
+// build history screen showing user's completed trails - mock data at the moment
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
   

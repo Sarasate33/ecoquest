@@ -11,7 +11,7 @@ class ExploreScreen extends StatefulWidget {
   @override
   State<ExploreScreen> createState() => _ExploreScreenState();
 }
-
+// filters and filter logic
 class _ExploreScreenState extends State<ExploreScreen> {
   String selectedFilter = "All";
   final List<String> filters = ["All", "Nature", "History", "Urban", "Group"];
@@ -75,6 +75,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
+// build card for each tour, data provided by data_sercvice.dart
   Widget _buildTourCard(BuildContext context, Map<String, dynamic> tour) {
     return GestureDetector(
       onTap: () {
@@ -128,7 +129,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   Text(
                     tour['subtitle'],
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    overflow: TextOverflow.ellipsis, //prevent overflow
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Colors.grey[600],
                     ),
