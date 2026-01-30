@@ -23,37 +23,19 @@ class BeaconService {
 
   final Map<int, Checkpoint> _beaconRegistry = {
     19641: const Checkpoint(
-      id: 'oak-tree',
-      name: 'Ancient Oak Tree',
+      id: 0,
+      name: 'Memorial Stone',
       description: 'Learn about the 300-year-old oak and its ecosystem',
       beaconUuid: 'fda50693-a4e2-4fb1-afcf-c6eb07647825',
       beaconMajor: 10011,
       beaconMinor: 19641,
       experienceType: ExperienceType.information,
     ),
-    19642: const Checkpoint(
-      id: 'stream',
-      name: 'Crystal Stream',
-      description: 'Discover aquatic wildlife and water quality',
-      beaconUuid: 'fda50693-a4e2-4fb1-afcf-c6eb07647825',
-      beaconMajor: 10011,
-      beaconMinor: 19642,
-      experienceType: ExperienceType.quiz,
-    ),
-    19643: const Checkpoint(
-      id: 'bird-watching',
-      name: 'Bird Watching Point',
-      description: 'Identify and learn about local bird species',
-      beaconUuid: 'fda50693-a4e2-4fb1-afcf-c6eb07647825',
-      beaconMajor: 10011,
-      beaconMinor: 19643,
-      experienceType: ExperienceType.game,
-    ),
   };
 
   StreamSubscription<List<ScanResult>>? _scanSubscription;
-  final Map<String, Checkpoint> _currentlyDetected = {};
-  final Map<String, DateTime> _lastTriggered = {};
+  final Map<int, Checkpoint> _currentlyDetected = {};
+  final Map<int, DateTime> _lastTriggered = {};
   final Duration _debounceTime = const Duration(seconds: 10);
   bool _isScanning = false;
 
@@ -131,7 +113,7 @@ class BeaconService {
   }
 
   void _processScanResults(List<ScanResult> results) {
-    final currentlyDetectedIds = <String>{};
+    final currentlyDetectedIds = <int>{};
 
     for (var result in results) {
       // Debug: show device id/name and advertisement counts
@@ -141,7 +123,7 @@ class BeaconService {
             : result.advertisementData.localName;
         if (_debug)
           print(
-            '[BeaconService] device: ${result.device.id} name="$name" rssi=${result.rssi}',
+            '[BeaconService] device: ${result.device.id.toString()} name="$name" rssi=${result.rssi}',
           );
       }
 

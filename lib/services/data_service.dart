@@ -5,9 +5,10 @@ class DataService {
 
   static final List<Map<String, dynamic>> tours = [
     {
-      "id": "t1",
+      "id": "0",
       "title": "Krugpark",
-      "subtitle": "The Krugpark is a recreational forest...",
+      "subtitle":
+          "The Krugpark is a scenic park and nature reserve located in the Wilhelmsdorf district of Branden-burg an der Havel, Germany. It serves as both a recreational area and an environmental education center, combining nature conservation, wildlife care, and sustainable learning in one harmonious setting.",
       "distance": "8 km away",
       "category": "Nature",
       "checkpoints": 16,
@@ -15,7 +16,7 @@ class DataService {
       "image": "assets/images/tour_krugpark.jpg",
     },
     {
-      "id": "t2",
+      "id": "1",
       "title": "Neustadt",
       "subtitle": "The city district Neustadt became part...",
       "distance": "12 km away",
@@ -25,7 +26,7 @@ class DataService {
       "image": "assets/images/tour_neustadt.jpg",
     },
     {
-      "id": "t3",
+      "id": "2",
       "title": "Technische Hochschule BRB",
       "subtitle": "The technical University of Brandenburg...",
       "distance": "16 km away",

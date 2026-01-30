@@ -3,7 +3,7 @@
 enum ExperienceType { information, quiz, game }
 
 class Checkpoint {
-  final String id;
+  final int id;
   final String name;
   final String description;
   final String beaconUuid;

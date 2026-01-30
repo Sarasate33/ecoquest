@@ -1,9 +1,11 @@
 // lib/screens/active_tour_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:flutter_application_demo/data/questions.dart';
 import 'dart:async';
 import '../config/theme.dart';
 import '../services/beacon_service.dart';
+import "package:flutter_application_demo/models/quiz_questions.dart";
 
 class ActiveTourScreen extends StatefulWidget {
   const ActiveTourScreen({super.key});
@@ -16,10 +18,12 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
   final BeaconService _beaconService = BeaconService();
   StreamSubscription? _detectedSub;
   StreamSubscription? _triggeredSub;
-  
-  int discoveredCheckpoints = 0;
+
+  int discoveredCheckpoints = 9;
   int totalCheckpoints = 16;
+  int currentPoints = 450;
   List<String> detectedBeaconNames = [];
+  List<String> selectedAnswers = [];
   String statusMessage = "Searching for checkpoints...";
 
   @override
@@ -44,29 +48,79 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
         discoveredCheckpoints++;
         statusMessage = "Checkpoint reached: ${checkpoint.name}";
       });
-      _showCheckpointDialog(checkpoint.name, checkpoint.description);
+      _showCheckpointDialog(
+        checkpoint.name,
+        checkpoint.description,
+        checkpoint.id,
+      );
     });
   }
 
-  void _showCheckpointDialog(String name, String description) {
+  void answerQuestion(String selectedAnswer, QuizQuestion checkpointQuestion) {
+    // Update main screen state (do NOT close the dialog here so the dialog can show feedback)
+    setState(() {
+      selectedAnswers.add(selectedAnswer);
+      if (selectedAnswer == checkpointQuestion.answers[0]) {
+        currentPoints += 150; // award points for correct answer
+        statusMessage = "Correct answer! +150 Points";
+      } else {
+        statusMessage = "Wrong answer. Try again next time!";
+      }
+    });
+  }
+
+  // Show dialog for discovered checkpoint - Quiz Questions
+  void _showCheckpointDialog(String name, String description, int id) {
+    final checkpointQuestion = questions[id];
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text("Checkpoint Discovered!", style: Theme.of(context).textTheme.titleLarge),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.check_circle, color: ecoPrimaryGreen, size: 60),
-            const SizedBox(height: 10),
-            Text(name, style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(description, style: Theme.of(context).textTheme.bodyMedium),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Great!"))
-        ],
-      ),
+      builder: (ctx) {
+        String? selected;
+        bool answered = false;
+        final shuffled = checkpointQuestion.getShuffledAnswers();
+        return StatefulBuilder(
+          builder: (ctx, setStateDialog) => AlertDialog(
+            title: Text(
+              "Checkpoint Discovered!",
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            content: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(textAlign: TextAlign.center, checkpointQuestion.text),
+                const SizedBox(height: 10),
+                ...shuffled.map((answer) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0),
+                    child: ElevatedButton(
+                      onPressed: answered
+                          ? null
+                          : () {
+                              setStateDialog(() {
+                                selected = answer;
+                                answered = true;
+                              });
+                              // Update parent state (awards points if correct)
+                              answerQuestion(answer, checkpointQuestion);
+                              // Close dialog after short delay so user sees feedback
+                              Future.delayed(
+                                const Duration(milliseconds: 800),
+                                () {
+                                  if (Navigator.of(ctx).canPop())
+                                    Navigator.of(ctx).pop();
+                                },
+                              );
+                            },
+                      child: Text(answer),
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -82,16 +136,22 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Active Tour", style: Theme.of(context).textTheme.titleLarge),
+        title: Text(
+          "Active Tour",
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
       ),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Row(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Discovered:", style: Theme.of(context).textTheme.bodyLarge),
+                Text(
+                  "Beacons discovered:",
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
                 Text(
                   "$discoveredCheckpoints/$totalCheckpoints",
                   style: Theme.of(context).textTheme.headlineLarge,
@@ -99,14 +159,29 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
               ],
             ),
           ),
-          
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Points:", style: Theme.of(context).textTheme.bodyLarge),
+                Text(
+                  "$currentPoints",
+                  style: Theme.of(context).textTheme.headlineLarge,
+                ),
+              ],
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Text(statusMessage, style: Theme.of(context).textTheme.bodySmall),
+            child: Text(
+              statusMessage,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           if (detectedBeaconNames.isNotEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -116,24 +191,38 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(12.0),
-                      child: Text("Beacons in Range:", style: Theme.of(context).textTheme.titleMedium),
+                      child: Text(
+                        "Beacons in Range:",
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
                     ),
-                    ...detectedBeaconNames.map((name) => ListTile(
-                      leading: const Icon(Icons.bluetooth, color: ecoPrimaryGreen),
-                      title: Text(name, style: Theme.of(context).textTheme.bodyMedium),
-                      dense: true,
-                    )),
+                    ...detectedBeaconNames.map(
+                      (name) => ListTile(
+                        leading: const Icon(
+                          Icons.bluetooth,
+                          color: ecoPrimaryGreen,
+                        ),
+                        title: Text(
+                          name,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        dense: true,
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
-          
+
           Expanded(
             child: Container(
               margin: const EdgeInsets.all(16),
               color: ecoGrey,
               child: Center(
-                child: Text("Map View", style: Theme.of(context).textTheme.bodyLarge),
+                child: Text(
+                  "Map View",
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
               ),
             ),
           ),

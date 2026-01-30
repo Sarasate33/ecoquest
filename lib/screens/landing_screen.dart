@@ -31,6 +31,12 @@ class _LandingScreenState extends State<LandingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final titleStyle = TextStyle(
+      fontFamily: fontTitle,
+      fontWeight: FontWeight.w700,
+      fontSize: 32,
+    );
+
     return Scaffold(
       backgroundColor: ecoPrimaryGreen,
       body: Center(
@@ -40,7 +46,6 @@ class _LandingScreenState extends State<LandingScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Logo Icon
-              
               Image.asset(
                 'assets/images/logo.png',
                 width: 150,
@@ -49,27 +54,32 @@ class _LandingScreenState extends State<LandingScreen> {
               ),
 
               const SizedBox(height: 24),
-              
+
               // EcoQuest Text mit orangem Q
               RichText(
-                text: TextStyle(
-                  fontFamily: fontTitle,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 32,
-                ).let((style) => TextSpan(
+                text: TextSpan(
                   children: [
-                    TextSpan(text: 'Eco', style: style.copyWith(color: Colors.white)),
-                    TextSpan(text: 'Q', style: style.copyWith(color: ecoFreshOrange)),
-                    TextSpan(text: 'uest', style: style.copyWith(color: Colors.white)),
+                    TextSpan(
+                      text: 'Eco',
+                      style: titleStyle.copyWith(color: Colors.white),
+                    ),
+                    TextSpan(
+                      text: 'Q',
+                      style: titleStyle.copyWith(color: ecoFreshOrange),
+                    ),
+                    TextSpan(
+                      text: 'uest',
+                      style: titleStyle.copyWith(color: Colors.white),
+                    ),
                   ],
-                )),
+                ),
               ),
-              
+
               Text(
                 "Discover Nature & History",
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white70,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.white70),
               ),
               const SizedBox(height: 48),
               TextField(
@@ -90,9 +100,9 @@ class _LandingScreenState extends State<LandingScreen> {
                   ),
                   child: Text(
                     "Start Journey",
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.white,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleMedium?.copyWith(color: Colors.white),
                   ),
                 ),
               ),
@@ -102,9 +112,4 @@ class _LandingScreenState extends State<LandingScreen> {
       ),
     );
   }
-}
-
-// Helper extension für cleaner code
-extension Let<T> on T {
-  R let<R>(R Function(T) block) => block(this);
 }
