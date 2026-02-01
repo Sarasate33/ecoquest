@@ -1,4 +1,5 @@
 // lib/services/data_service.dart
+import '../models/checkpoint.dart';
 
 class DataService {
   static String currentUserName = "Guest";
@@ -42,4 +43,16 @@ class DataService {
     "badges": 5,
     "totalSteps": 125000,
   };
+
+  static final List<Checkpoint> checkpoints = [
+    const Checkpoint(
+      id: 0,
+      name: 'Memorial Stone',
+      description:
+          'This stone commemorates ... and his contributions to animal welfare.',
+      beaconUuid: 'fda50693-a4e2-4fb1-afcf-c6eb07647825',
+      beaconMajor: 10011,
+      beaconMinor: 19641,
+    ),
+  ];
 }

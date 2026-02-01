@@ -2,7 +2,7 @@
 
 Ecoquest is a cross-device application providing interactive guided tours.
 
-# Set up MacOS
+# Set up
 
 ## Install VSCode
 
