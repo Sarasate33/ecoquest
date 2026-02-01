@@ -1,3 +1,6 @@
+// lib/models/quiz_questions.dart
+
+// Definition of the QuizQuestion model used in the app.
 class QuizQuestion {
   final String text;
   final List<String> answers;

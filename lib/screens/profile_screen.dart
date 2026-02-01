@@ -22,6 +22,7 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 10),
             Center(
               child: Text(
+                // display current user name from data_service
                 DataService.currentUserName,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
@@ -38,7 +39,7 @@ class ProfileScreen extends StatelessWidget {
               onTap: () {
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(builder: (context) => const LandingScreen()),
+                  MaterialPageRoute(builder: (context) => const LandingScreen()), // return to landing screen
                   (route) => false,
                 );
               },

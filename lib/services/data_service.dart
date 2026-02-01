@@ -2,8 +2,10 @@
 import '../models/checkpoint.dart';
 
 class DataService {
+  // set on the landing screen, used by the lobby and profile
   static String currentUserName = "Guest";
 
+  // the list of available tours shown on the explore screen
   static final List<Map<String, dynamic>> tours = [
     {
       "id": "0",
@@ -38,12 +40,14 @@ class DataService {
     },
   ];
 
+  // mock user stats shown on the history screen.
   static Map<String, dynamic> userProfile = {
     "trailsCompleted": 14,
     "badges": 5,
     "totalSteps": 125000,
   };
 
+  // the iBeacon checkpoint definitions, also map beacon to quiz question
   static final List<Checkpoint> checkpoints = [
     const Checkpoint(
       id: 0,

@@ -8,6 +8,7 @@ import '../services/data_service.dart';
 import '../services/beacon_service.dart';
 import 'package:flutter_application_demo/models/quiz_questions.dart';
 
+// screen shown during an active tour, handles beacon scanning and quiz questions
 class ActiveTourScreen extends StatefulWidget {
   const ActiveTourScreen({super.key});
 
@@ -19,6 +20,7 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
   final BeaconService _beaconService = BeaconService();
   StreamSubscription? _triggeredSub;
 
+  // tour state variables
   int discoveredCheckpoints = 9;
   int totalCheckpoints = 16;
   int currentPoints = 450;
@@ -33,11 +35,13 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
     _startScanning();
   }
 
+  // start beacon scanning and listen for discovered checkpoints
   Future<void> _startScanning() async {
+    // register checkpoints from data service
     _beaconService.registerCheckpoints(DataService.checkpoints);
-
+    // start scanning
     await _beaconService.startScanning();
-
+      // listen for discovered checkpoints
     _triggeredSub = _beaconService.checkpointTriggered.listen((checkpoint) {
       if (!mounted) return;
       setState(() {
@@ -52,7 +56,6 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
   }
 
   void answerQuestion(String selectedAnswer, QuizQuestion checkpointQuestion) {
-    // Update main screen state (do NOT close the dialog here so the dialog can show feedback)
     setState(() {
       selectedAnswers.add(selectedAnswer);
       if (selectedAnswer == checkpointQuestion.answers[0]) {
@@ -82,9 +85,9 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(textAlign: TextAlign.center, checkpointQuestion.text),
+                Text(textAlign: TextAlign.center, checkpointQuestion.text), // question text
                 const SizedBox(height: 10),
-                ...shuffled.map((answer) {
+                ...shuffled.map((answer) { //answers
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4.0),
                     child: ElevatedButton(
@@ -96,8 +99,6 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
                               });
                               // Update parent state (awards points if correct)
                               answerQuestion(answer, checkpointQuestion);
-                              // Close dialog after short delay so user sees feedback
-
                               if (Navigator.of(ctx).canPop()) {
                                 Navigator.of(ctx).pop();
                               }
@@ -114,6 +115,7 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
     );
   }
 
+  // stop scanning and clean up
   @override
   void dispose() {
     _triggeredSub?.cancel();
@@ -121,6 +123,7 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
     super.dispose();
   }
 
+  // build UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(

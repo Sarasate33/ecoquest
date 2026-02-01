@@ -1,5 +1,6 @@
 // lib/models/checkpoint.dart
 
+// Definition of the Checkpoint model used in the app.
 class Checkpoint {
   final int id;
   final String name;
