@@ -25,7 +25,7 @@ class BeaconService {
     19641: const Checkpoint(
       id: 0,
       name: 'Memorial Stone',
-      description: 'Learn about the 300-year-old oak and its ecosystem',
+      description: 'This stone commemorates ... and his contributions to animal welfare.',
       beaconUuid: 'fda50693-a4e2-4fb1-afcf-c6eb07647825',
       beaconMajor: 10011, // must match ble beacons major
       beaconMinor: 19641, // minor used as unique checkpoint id

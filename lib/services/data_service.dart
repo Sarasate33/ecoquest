@@ -8,7 +8,7 @@ class DataService {
       "id": "0",
       "title": "Krugpark",
       "subtitle":
-          "The Krugpark is a scenic park and nature reserve located in the Wilhelmsdorf district of Branden-burg an der Havel, Germany. It serves as both a recreational area and an environmental education center, combining nature conservation, wildlife care, and sustainable learning in one harmonious setting.",
+          "The Krugpark is a scenic park and nature reserve located in the Wilhelmsdorf district of Brandenburg an der Havel, Germany. It serves as both a recreational area and an environmental education center, combining nature conservation, wildlife care, and sustainable learning in one harmonious setting.",
       "distance": "8 km away",
       "category": "Nature",
       "checkpoints": 16,
