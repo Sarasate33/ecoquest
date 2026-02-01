@@ -31,3 +31,29 @@ Ecoquest is a cross-device application providing interactive guided tours.
 *Note: Question function will not work as you will have no BLE Beacon to trigger it
 
 *Note: for any troubles visit: https://docs.flutter.dev/install/quick
+
+##Sources:
+### Code:
+Lookup source for flutter functionality/how we learned flutter:   https://www.youtube.com/watch?v=3kaGC_DrUnw
+Quiz Functionality:   https://www.youtube.com/watch?v=VEbNXOe2O04
+theme.dart:   https://www.christianfindlay.com/blog/flutter-mastering-material-design3
+              https://docs.flutter.dev/cookbook/design/themes
+AI Source:    https://claude.ai/new
+              used to generate bluetooth permissions in ios/info.plist and Android/app/src/AndroidManifest
+              used to build beacon_service.dart
+
+### BLE Beacon
+Hardware doc for BLE beacon: https://docs.nordicsemi.com/bundle/nan_36/resource/nan_36.pdf
+
+### Images:
+tour_krugpark.jpg: Pixabay (uploaded by: @thomashendele), https://pixabay.com/photos/forest-hiking-trees-path-trail-682003/ , accessed 16.12.2025.
+tour_neustadt.jpg: Pixabay (uploaded by: @Pixel-Sepp), https://pixabay.com/photos/waldkirch-of-city-at-night-230711/, accessed 16.12.2025.
+tour_thb.jpg: THB/Oliver Karaschewski, https://jobs.b-ite.com/api/v1/assets/0d30fb89-322e-494b-98df-95eea33759e7.jpeg, accessed 28.01.2026.
+
+### Icons
+Google Material Symbols, https://fonts.google.com/icons, accessed 16.12.2025.
+
+### Fonts
+Inter, Google Fonts, https://fonts.google.com/specimen/Inter?query=inter, accessed 16.12.2025
+Merriweather, Google Fonts, https://fonts.google.com/specimen/Merriweather, accessed 16.12.2025
+ 
