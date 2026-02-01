@@ -11,6 +11,7 @@ class LobbyScreen extends StatelessWidget {
 
   const LobbyScreen({super.key, required this.lobbyCode, required this.isHost});
 
+  // build lobby screen showing lobby code and participants
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,6 +101,7 @@ class LobbyScreen extends StatelessWidget {
               ),
             ),
 
+            // change button based on host or participant
             const Spacer(),
             if (isHost)
               SizedBox(

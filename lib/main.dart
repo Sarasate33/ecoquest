@@ -13,6 +13,7 @@ void main() {
   runApp(const EcoQuestApp());
 }
 
+// main app widget
 class EcoQuestApp extends StatelessWidget {
   const EcoQuestApp({super.key});
 

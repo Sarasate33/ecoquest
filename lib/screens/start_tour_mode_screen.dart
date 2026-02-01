@@ -16,14 +16,15 @@ class StartTourModeScreen extends StatefulWidget {
 class _StartTourModeScreenState extends State<StartTourModeScreen> {
   final TextEditingController _lobbyCodeController = TextEditingController();
 
+  // different function depending on selected mode
   void _createLobby() {
-    final code = (100000 + Random().nextInt(900000)).toString();
+    final code = (100000 + Random().nextInt(900000)).toString(); // generate random 6-digit code
     Navigator.push(context, MaterialPageRoute(builder: (context) => LobbyScreen(lobbyCode: code, isHost: true)));
   }
 
   void _joinLobby() {
     // simple validation for 6-digit code
-    if (_lobbyCodeController.text.length == 6) {
+    if (_lobbyCodeController.text.length == 6) { // check code length
       Navigator.push(context, MaterialPageRoute(builder: (context) => LobbyScreen(lobbyCode: _lobbyCodeController.text, isHost: false)));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please enter a valid 6-digit code.")));
@@ -31,7 +32,7 @@ class _StartTourModeScreenState extends State<StartTourModeScreen> {
   }
 
   void _startSolo() {
-    Navigator.push(context, MaterialPageRoute(builder: (context) => const ActiveTourScreen()));
+    Navigator.push(context, MaterialPageRoute(builder: (context) => const ActiveTourScreen())); // start active tour directly
   }
 
   @override

@@ -17,6 +17,7 @@ class _LandingScreenState extends State<LandingScreen> {
 
   void _enterApp() {
     if (_nameController.text.isNotEmpty) {
+      // set user name
       DataService.currentUserName = _nameController.text;
       Navigator.pushReplacement(
         context,

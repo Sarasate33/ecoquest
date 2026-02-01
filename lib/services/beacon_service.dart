@@ -13,9 +13,11 @@ class BeaconService {
   final _checkpointTriggeredController =
       StreamController<Checkpoint>.broadcast();
 
+  // stream of discovered checkpoints
   Stream<Checkpoint> get checkpointTriggered =>
       _checkpointTriggeredController.stream;
 
+  // set values to compare beacons against - hardcoded at the moment
   final Map<int, Checkpoint> _beaconRegistry = {};
   final String _targetUuid = 'fda50693-a4e2-4fb1-afcf-c6eb07647825';
   final int _targetMajor = 10011;
@@ -24,15 +26,18 @@ class BeaconService {
   final Set<int> _discoveredCheckpointIds = {};
   bool _isScanning = false;
 
+  // register checkpoints to compare against
   void registerCheckpoints(List<Checkpoint> checkpoints) {
     for (final checkpoint in checkpoints) {
       _beaconRegistry[checkpoint.beaconMinor] = checkpoint;
     }
   }
 
+  // start scanning for beacons
   Future<void> startScanning() async {
     if (_isScanning || _beaconRegistry.isEmpty) return;
 
+    // request necessary permissions
     final granted = await _requestPermissions();
     if (!granted) return;
 
@@ -42,10 +47,12 @@ class BeaconService {
 
       _isScanning = true;
 
+      // stop any ongoing scan
       try {
         await FlutterBluePlus.stopScan();
       } catch (_) {}
 
+      // start scanning
       FlutterBluePlus.startScan(androidUsesFineLocation: true);
 
       _scanSubscription = FlutterBluePlus.scanResults.listen(
@@ -57,6 +64,7 @@ class BeaconService {
     }
   }
 
+  // request necessary Bluetooth and location permissions
   Future<bool> _requestPermissions() async {
     final bluetoothScan = await Permission.bluetoothScan.request();
     final bluetoothConnect = await Permission.bluetoothConnect.request();
@@ -67,6 +75,7 @@ class BeaconService {
         (location.isGranted || location.isLimited);
   }
 
+  // process scan results to identify target beacons
   void _processScanResults(List<ScanResult> results) {
     for (var result in results) {
       final ibeacon = _parseIBeacon(result);
@@ -76,9 +85,9 @@ class BeaconService {
       final major = ibeacon['major'] as int;
       final minor = ibeacon['minor'] as int;
 
-      if (uuid.toLowerCase() != _targetUuid.toLowerCase()) continue;
-      if (major != _targetMajor) continue;
-      if (_discoveredCheckpointIds.contains(minor)) continue;
+      if (uuid.toLowerCase() != _targetUuid.toLowerCase()) continue; // check if beacon belongs to our app
+      if (major != _targetMajor) continue; // check if beacon belongs to this tour
+      if (_discoveredCheckpointIds.contains(minor)) continue; // check if already discovered
 
       final checkpoint = _beaconRegistry[minor];
       if (checkpoint == null) continue;
@@ -87,6 +96,16 @@ class BeaconService {
       _checkpointTriggeredController.add(checkpoint);
     }
   }
+
+  /* 
+  iBeacon format:
+
+  [0x4C 0x00] (Apple company id) [0x02] [0x15] [16 bytes UUID] [2 bytes Major] [2 bytes Minor] [1 byte txPower]
+  
+  _parseIBeacon checks for the Apple company id and the 0x02 0x15 prefix,
+  then slices out the UUID, Major, Minor, and txPower. The UUID bytes get
+  formatted into the standard xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx string by _bytesToUuid.
+  */
 
   Map<String, dynamic>? _parseIBeacon(ScanResult result) {
     try {
@@ -125,6 +144,7 @@ class BeaconService {
     return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20, 32)}';
   }
 
+  // stop scanning for beacons
   Future<void> stopScanning() async {
     _isScanning = false;
     await _scanSubscription?.cancel();
