@@ -1,5 +1,4 @@
 // lib/services/beacon_service.dart
-// Updated: more robust single persistent scan + debug logging
 
 import 'dart:async';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
@@ -7,94 +6,54 @@ import 'package:permission_handler/permission_handler.dart';
 import '../models/checkpoint.dart';
 
 class BeaconService {
-  //singleton pattern - only one instanc eof BeaconService exists app-wide: all share same scanner state
   static final BeaconService _instance = BeaconService._internal();
   factory BeaconService() => _instance;
   BeaconService._internal();
 
-  // broadcast stream for checkpoint trigger events
   final _checkpointTriggeredController =
       StreamController<Checkpoint>.broadcast();
 
-  // get stream of triggered checkpoints
   Stream<Checkpoint> get checkpointTriggered =>
       _checkpointTriggeredController.stream;
 
-  // database of known checkpoints with their beacon identifiers
-  final Map<int, Checkpoint> _beaconRegistry = {
-    19641: const Checkpoint(
-      id: 0,
-      name: 'Memorial Stone',
-      description: 'This stone commemorates ... and his contributions to animal welfare.',
-      beaconUuid: 'fda50693-a4e2-4fb1-afcf-c6eb07647825',
-      beaconMajor: 10011, // must match ble beacons major
-      beaconMinor: 19641, // minor used as unique checkpoint id
-    ),
-  };
-
-  StreamSubscription<List<ScanResult>>?
-  _scanSubscription; // active scan subscription, nullable if scan not active
-  final Map<int, Checkpoint> _currentlyDetected = {};
-  final Map<int, DateTime> _lastTriggered = {}; // for debouncing (cooldown)
-  final Set<int> _discoveredCheckpointIds =
-      {}; // tracks checkpoints already triggered in this session
-  final Duration _debounceTime = const Duration(seconds: 10);
-  bool _isScanning = false;
-
-  // Target ble identifiers
+  final Map<int, Checkpoint> _beaconRegistry = {};
   final String _targetUuid = 'fda50693-a4e2-4fb1-afcf-c6eb07647825';
   final int _targetMajor = 10011;
 
-  // Toggle this to enable/disable debug prints
-  final bool _debug = true;
+  StreamSubscription<List<ScanResult>>? _scanSubscription;
+  final Set<int> _discoveredCheckpointIds = {};
+  bool _isScanning = false;
 
-  // Start scanning (single persistent scan; idempotent)
-  Future<void> startScanning() async {
-    if (_isScanning) {
-      if (_debug) print('[BeaconService] startScanning: already scanning');
-      return;
+  void registerCheckpoints(List<Checkpoint> checkpoints) {
+    for (final checkpoint in checkpoints) {
+      _beaconRegistry[checkpoint.beaconMinor] = checkpoint;
     }
+  }
+
+  Future<void> startScanning() async {
+    if (_isScanning || _beaconRegistry.isEmpty) return;
 
     final granted = await _requestPermissions();
-    if (!granted) {
-      if (_debug)
-        print('[BeaconService] startScanning: permissions not granted');
-      return;
-    }
+    if (!granted) return;
 
     try {
       final adapterState = await FlutterBluePlus.adapterState.first;
-      if (adapterState != BluetoothAdapterState.on) {
-        if (_debug)
-          print('[BeaconService] Bluetooth adapter not ON: $adapterState');
-        return;
-      }
+      if (adapterState != BluetoothAdapterState.on) return;
 
       _isScanning = true;
-      if (_debug) print('[BeaconService] Starting BLE scan (persistent)');
 
-      // Ensure previous scan stopped
       try {
         await FlutterBluePlus.stopScan();
       } catch (_) {}
 
-      // Start persistent scan
       FlutterBluePlus.startScan(androidUsesFineLocation: true);
 
-      // Subscribe once to aggregated scanResults stream
       _scanSubscription = FlutterBluePlus.scanResults.listen(
-        (results) {
-          if (_debug) print('[BeaconService] scanResults: ${results.length}');
-          _processScanResults(results);
-        },
-        onError: (e) {
-          _isScanning = false;
-          if (_debug) print('[BeaconService] scanResults error: $e');
-        },
+        _processScanResults,
+        onError: (_) => _isScanning = false,
       );
-    } catch (e) {
+    } catch (_) {
       _isScanning = false;
-      if (_debug) print('[BeaconService] startScanning error: $e');
     }
   }
 
@@ -103,74 +62,30 @@ class BeaconService {
     final bluetoothConnect = await Permission.bluetoothConnect.request();
     final location = await Permission.locationWhenInUse.request();
 
-    if (_debug) {
-      print(
-        '[BeaconService] permission status - bluetoothScan: ${bluetoothScan.isGranted}, bluetoothConnect: ${bluetoothConnect.isGranted}, location: ${location.isGranted}',
-      );
-    }
-
     return bluetoothScan.isGranted &&
         bluetoothConnect.isGranted &&
         (location.isGranted || location.isLimited);
   }
 
   void _processScanResults(List<ScanResult> results) {
-    final currentlyDetectedIds = <int>{};
-
     for (var result in results) {
-      // Debug: show device id/name and advertisement counts
-      if (_debug) {
-        final name = result.device.name.isNotEmpty
-            ? result.device.name
-            : result.advertisementData.localName;
-        if (_debug)
-          print(
-            '[BeaconService] device: ${result.device.id.toString()} name="$name" rssi=${result.rssi}',
-          );
-      }
+      final ibeacon = _parseIBeacon(result);
+      if (ibeacon == null) continue;
 
-      // Try parsing iBeacon from manufacturer data
-      final beaconData = _parseIBeacon(result);
-      if (beaconData != null) {
-        final minor = beaconData['minor'] as int;
-        final checkpoint = _beaconRegistry[minor];
-        if (checkpoint != null) {
-          currentlyDetectedIds.add(checkpoint.id);
-          final isNew = !_currentlyDetected.containsKey(checkpoint.id);
-          _currentlyDetected[checkpoint.id] = checkpoint;
-          if (isNew) {
-            if (_debug)
-              print(
-                '[BeaconService] New beacon matched: ${checkpoint.name} (minor=$minor)',
-              );
-            _triggerCheckpoint(checkpoint);
-          } else {
-            if (_debug)
-              print(
-                '[BeaconService] Beacon still present: ${checkpoint.name} (minor=$minor)',
-              );
-          }
-        } else {
-          if (_debug)
-            print('[BeaconService] beaconData minor=$minor not in registry');
-        }
-      } /*else {
-        // Optionally log manufacturer map contents for debugging
-        final manufacturerData = result.advertisementData.manufacturerData;
-        if (_debug) {
-          if (manufacturerData.isNotEmpty) {
-            manufacturerData.forEach((companyId, data) {
-              if (_debug) print('[BeaconService] manufacturerData - companyId=0x${companyId.toRadixString(16)} length=${data.length}');
-            });
-          }
-        }
-      }*/
+      final uuid = ibeacon['uuid'] as String;
+      final major = ibeacon['major'] as int;
+      final minor = ibeacon['minor'] as int;
+
+      if (uuid.toLowerCase() != _targetUuid.toLowerCase()) continue;
+      if (major != _targetMajor) continue;
+      if (_discoveredCheckpointIds.contains(minor)) continue;
+
+      final checkpoint = _beaconRegistry[minor];
+      if (checkpoint == null) continue;
+
+      _discoveredCheckpointIds.add(minor);
+      _checkpointTriggeredController.add(checkpoint);
     }
-
-    // Remove ones no longer detected
-    _currentlyDetected.removeWhere(
-      (id, _) => !currentlyDetectedIds.contains(id),
-    );
   }
 
   Map<String, dynamic>? _parseIBeacon(ScanResult result) {
@@ -178,81 +93,36 @@ class BeaconService {
       final manufacturerData = result.advertisementData.manufacturerData;
       if (manufacturerData.isEmpty) return null;
 
-      // Look for Apple's company id 0x004C (decimal 76)
       for (var entry in manufacturerData.entries) {
         final companyId = entry.key;
         final data = entry.value;
 
-        // Debug: show company id + first bytes
-        if (_debug) {
-          final preview = data
-              .take(6)
-              .map((b) => b.toRadixString(16).padLeft(2, '0'))
-              .join(' ');
-          print(
-            '[BeaconService] parseIBeacon: company=0x${companyId.toRadixString(16)} dataLen=${data.length} firstBytes=[$preview]',
-          );
-        }
+        // Apple company id 0x004C, iBeacon prefix 0x02 0x15
+        if (companyId == 0x004C &&
+            data.length >= 23 &&
+            data[0] == 0x02 &&
+            data[1] == 0x15) {
+          final uuid = _bytesToUuid(data.sublist(2, 18));
+          final major = (data[18] << 8) | data[19];
+          final minor = (data[20] << 8) | data[21];
+          final txPower = data[22];
 
-        if (companyId == 0x004C && data.length >= 23) {
-          // iBeacon prefix bytes: 0x02 0x15
-          if (data[0] == 0x02 && data[1] == 0x15) {
-            final uuidBytes = data.sublist(2, 18);
-            final uuid = _bytesToUuid(uuidBytes);
-            final major = (data[18] << 8) | data[19];
-            final minor = (data[20] << 8) | data[21];
-            final txPower = data[22];
-
-            if (_debug) {
-              print(
-                '[BeaconService] iBeacon parsed: uuid=$uuid major=$major minor=$minor tx=$txPower rssi=${result.rssi}',
-              );
-            }
-
-            if (uuid.toLowerCase() == _targetUuid.toLowerCase() &&
-                major == _targetMajor) {
-              return {
-                'uuid': uuid,
-                'major': major,
-                'minor': minor,
-                'txPower': txPower,
-                'rssi': result.rssi,
-              };
-            }
-          }
+          return {
+            'uuid': uuid,
+            'major': major,
+            'minor': minor,
+            'txPower': txPower,
+            'rssi': result.rssi,
+          };
         }
       }
-    } catch (e) {
-      if (_debug) print('[BeaconService] parseIBeacon error: $e');
-    }
+    } catch (_) {}
     return null;
   }
 
   String _bytesToUuid(List<int> bytes) {
     final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
     return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20, 32)}';
-  }
-
-  void _triggerCheckpoint(Checkpoint checkpoint) {
-    // Skip if already discovered in this session
-    if (_discoveredCheckpointIds.contains(checkpoint.id)) {
-      return;
-    }
-
-    final last = _lastTriggered[checkpoint.id];
-    if (last != null) {
-      final elapsed = DateTime.now().difference(last);
-      if (elapsed < _debounceTime) {
-        if (_debug)
-          print(
-            '[BeaconService] Debounced checkpoint ${checkpoint.id} (${elapsed.inSeconds}s)',
-          );
-        return;
-      }
-    }
-    _lastTriggered[checkpoint.id] = DateTime.now();
-    _discoveredCheckpointIds.add(checkpoint.id);
-    _checkpointTriggeredController.add(checkpoint);
   }
 
   Future<void> stopScanning() async {
@@ -262,10 +132,8 @@ class BeaconService {
     try {
       await FlutterBluePlus.stopScan();
     } catch (_) {}
-    _currentlyDetected.clear();
   }
 
-  /// Reset discovered checkpoints for a new tour session
   void resetDiscoveredCheckpoints() {
     _discoveredCheckpointIds.clear();
   }

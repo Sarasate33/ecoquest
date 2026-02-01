@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_demo/services/questions.dart';
 import 'dart:async';
 import '../config/theme.dart';
+import '../services/data_service.dart';
 import '../services/beacon_service.dart';
-import "package:flutter_application_demo/models/quiz_questions.dart";
+import 'package:flutter_application_demo/models/quiz_questions.dart';
 
 class ActiveTourScreen extends StatefulWidget {
   const ActiveTourScreen({super.key});
@@ -33,6 +34,8 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
   }
 
   Future<void> _startScanning() async {
+    _beaconService.registerCheckpoints(DataService.checkpoints);
+
     await _beaconService.startScanning();
 
     _triggeredSub = _beaconService.checkpointTriggered.listen((checkpoint) {
@@ -67,7 +70,6 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
     showDialog(
       context: context,
       builder: (ctx) {
-        String? selected;
         bool answered = false;
         final shuffled = checkpointQuestion.getShuffledAnswers();
         return StatefulBuilder(
@@ -90,20 +92,20 @@ class _ActiveTourScreenState extends State<ActiveTourScreen> {
                           ? null
                           : () {
                               setStateDialog(() {
-                                selected = answer;
                                 answered = true;
                               });
                               // Update parent state (awards points if correct)
                               answerQuestion(answer, checkpointQuestion);
                               // Close dialog after short delay so user sees feedback
 
-                              if (Navigator.of(ctx).canPop())
+                              if (Navigator.of(ctx).canPop()) {
                                 Navigator.of(ctx).pop();
+                              }
                             },
                       child: Text(answer),
                     ),
                   );
-                }).toList(),
+                }),
               ],
             ),
           ),
