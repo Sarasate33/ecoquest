@@ -24,8 +24,10 @@ Ecoquest is a cross-device application providing interactive guided tours.
 11. run flutter doctor to verify installation
 
 ## Running
-12. flutter run 
+
+12. Type flutter run in terminal
 13. Select an emulator (Chrome or whatever is available)
 
 *Note: Question function will not work as you will have no BLE Beacon to trigger it
 
+*Note: for any troubles visit: https://docs.flutter.dev/install/quick
